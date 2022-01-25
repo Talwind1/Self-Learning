@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const validate = require("validator");
+const validator = require("validator");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
@@ -41,7 +41,7 @@ const userSchema = new mongoose.Schema({
       }
     },
   },
-  token: [
+  tokens: [
     {
       //allowed the user to connect from different devices.
       token: {
@@ -62,24 +62,58 @@ userSchema.pre("save", async function (next) {
   console.log("just before saving!   ");
   next(); //is the function that executed right after the middleware method, important to remember!
 }); //middleware methods
-const User = mongoose.model("User", userSchema);
 
-const jwt = require("jsonwebtoken");
+//token is a signature we create to identify the user- for his actions in the app.
+//'authenicated user' can change and act in his account.
+//create and manage tokens: we'll do it with jwt- json wrb token library (package)
+//expire tokens.
+// instead of jwt - we require bcrypt.
+//jws.sign - creatS token, two argument:
+// 1- data which ambaded in the token
+// 2- secret- random series of characters
+//3-(optional) - options- object, we add '{expiresIn: '7 days'}
 
+//TOKEN is create data that verifieable via the signature.
+// base64 string - is a langueage that our string translated to.
+//the signature is verified the token
+
+//jwt.verify- is compare between the token and the original signature.
+
+//reusable function for creation of tokens.
+
+// check router.post('/users/login)
+
+// userSchema.methods.generateAuthToken = async function (){
+
+// }
 userSchema.methods.generateAuthToken = async function () {
   const user = this;
-  const token = jwt.sign(
-    { _id: user._id.toString() },
-    "thisismynewcourse",
-    /*options*/ { expiresIn: "7 days" }
-  ); // creates data that verfied this signature. made of first argument data and time created.
-  user.tokens.concat({ token });
+  const token = jwt.sign({ _id: user._id.toString() }, "uniqueSentence");
+  user.tokens = user.tokens.concat({ token });
   await user.save();
+
+  return token;
 };
 
-const myFunction2 = async () => {
-  //  console.log(token);
-  const data = jwt.verify(token, "thisismynewcourse"); //check if token is valid
+//Middleware:
+// middleware allow us to add a function between request and response:
+// new request --> do somethinf --> new route handler.
+//costumise to feet our needs.
 
-  console.log(data);
+userSchema.statics.findByCredentials = async (email, password) => {
+  const user = await User.findOne({ email: email });
+  if (!user) {
+    throw new Error("Unable to login ");
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+
+  if (!isMatch) {
+    throw new Error("Unable to login");
+  }
+
+  return user;
 };
+
+const User = mongoose.model("User", userSchema);
+module.exports = User;
