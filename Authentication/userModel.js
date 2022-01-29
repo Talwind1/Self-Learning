@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
+    unique: true,
     trim: true,
     lowercase: true,
     validate(value) {
@@ -51,6 +52,12 @@ const userSchema = new mongoose.Schema({
     },
   ],
 });
+
+userSchema.virtual("tasks", {
+  ref: "Task",
+  localField: "_id",
+  foreignField: "owner",
+}); //it doesnt really store in the DB its just for mongoose the figure who owns what
 
 userSchema.pre("save", async function (next) {
   const user = this; //this is equal to the document which being saved.
@@ -126,3 +133,15 @@ userSchema.methods.toJSON = function () {
 };
 const User = mongoose.model("User", userSchema);
 module.exports = User;
+
+// userSchema.methods.getPublicProfile = function () {
+//   const user = this;
+//   const userObject = user.toObject();
+//   delete userObject.password;
+//   delete userObject.tokens;
+//   return userObject;
+// };
+//toJSON is the same function. it excecute even though it doesn't called.
+// toJSON authomatically called . because when we call res.send, Json.stringify is
+//called behind the scenes. toJSON called whenever object convert to JSON.
+//
