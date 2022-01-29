@@ -54,6 +54,7 @@ const userSchema = new mongoose.Schema({
 });
 
 userSchema.virtual("tasks", {
+  //not actual data stores in  nthe db, its a relationship , help to mongoose to figure out thr relation
   ref: "Task",
   localField: "_id",
   foreignField: "owner",
@@ -95,10 +96,10 @@ userSchema.pre("save", async function (next) {
 // }
 userSchema.methods.generateAuthToken = async function () {
   const user = this;
+
   const token = jwt.sign({ _id: user._id.toString() }, "uniqueSentence");
   user.tokens = user.tokens.concat({ token });
   await user.save();
-
   return token;
 };
 

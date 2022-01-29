@@ -1,11 +1,11 @@
 const express = require("express");
-const router = new express.Router();
+const router = express.Router();
 const User = require("./userModel");
 const auth = require("./middleware/auth");
 
 router.get("/users", async (req, res) => {
   try {
-    const users = await User.find({});
+    const users = await User.find();
     res.send(users);
   } catch (e) {
     res.status(500).send(e.message);
@@ -17,11 +17,13 @@ router.get("/users/me", auth, async (req, res) => {
 });
 
 router.post("/users", async (req, res) => {
-  const user = new User(req.body);
   try {
+    const user = new User(req.body);
+    // console.log("User Body:", req.body);
+    // console.log(user);
     const token = await user.generateAuthToken(); //?
     await user.save();
-    console.log(user);
+    console.log(token);
     res.status(201).send({ user, token });
   } catch (e) {
     res.status(400).send(e.message);
